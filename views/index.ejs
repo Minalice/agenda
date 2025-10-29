@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Agenda Telefônica</title>
+  <style>
+    body { font-family: Arial; background: #f2f2f2; padding: 20px; }
+    h1 { color: #333; }
+    form, table { margin-bottom: 20px; }
+    input, button { padding: 8px; margin: 5px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; }
+    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+    tr:hover { background: #f9f9f9; cursor: pointer; }
+    .selecionado { background-color: #d0ebff !important; }
+  </style>
+</head>
+<body>
+  <h1>Agenda Telefônica</h1>
+
+  <form action="/contato" method="POST">
+    <input type="text" name="nome" placeholder="Nome" required>
+    <input type="text" name="idade" placeholder="Idade" required pattern="\d+">
+    <input type="text" name="telefones" placeholder="Telefones (separados por vírgula)">
+    <button type="submit">Cadastrar</button>
+  </form>
+
+  <form method="GET" action="/">
+    <input type="text" name="q" value="<%= pesquisa || '' %>" placeholder="Pesquisar por nome ou telefone">
+    <button type="submit">Pesquisar</button>
+  </form>
+
+  <table id="tabela-contatos">
+    <tr>
+      <th>ID</th>
+      <th>Nome</th>
+      <th>Idade</th>
+      <th>Telefones</th>
+      <th>Ações</th>
+    </tr>
+    <% if (contatos.length > 0) { %>
+      <% contatos.forEach(c => { %>
+        <tr data-id="<%= c.ID %>">
+          <form action="/alterar/<%= c.ID %>" method="POST">
+            <td><%= c.ID %></td>
+            <td><input name="nome" value="<%= c.NOME %>" required disabled></td>
+            <td><input type="number" name="idade" value="<%= c.IDADE %>" required disabled></td>
+            <td><input name="telefones" value="<%= c.TELEFONES || '' %>" disabled></td>
+            <td>
+            <button type="button" onclick="enviarAlteracao" disabled>Alterar</button>
+          </form>
+          <form action="/excluir/<%= c.ID %>" method="POST" style="display:inline;">
+              <button type="submit" style="background:red;color:white;">Excluir</button>
+          </form>
+          </td>
+        </tr>
+      <% }) %>
+    <% } else { %>
+      <tr><td colspan="5">Nenhum contato encontrado.</td></tr>
+    <% } %>
+  </table>
+
+  <script>
+    const linhas = document.querySelectorAll('#tabela-contatos tr[data-id]');
+    let selecionado = null;
+
+    linhas.forEach(linha => {
+      linha.addEventListener('click', () => {
+        if (selecionado) {
+          selecionado.classList.remove('selecionado');
+          toggleCampos(selecionado, true);
+        }
+
+        selecionado = linha;
+        linha.classList.add('selecionado');
+        toggleCampos(linha, false);
+      });
+    });
+
+    function toggleCampos(linha, desabilitar) {
+      linha.querySelectorAll('input').forEach(inp => inp.disabled = desabilitar);
+      const botao = linha.querySelector('button[onclick^="enviarAlteracao"]');
+      if (botao) botao.disabled = desabilitar;
+    }
+
+    function enviarAlteracao(id) {
+      const form = document.querySelector(`form[action="/alterar/${id}"]`);
+      if (form) form.submit();
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && e.target.tagName === 'INPUT') e.preventDefault();
+    });
+  </script>
+</body>
+</html>
